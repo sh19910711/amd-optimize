@@ -2,11 +2,10 @@
 var fs = require('fs');
 var optimize = require('../index.js');
 var assert = require('assert');
-var loadFileFromNet = require('./utils/loadFileFromNet');
+var loadFileFromFakeNet = require('./utils/loadFileFromFakeNet');
 var _ = require('lodash');
 var http = require('http');
 var path = require('path');
-var connect = require('connect'); // add to write web server
 var url = require('url');
 
 describe("Load through HTTP (nested modules)", function(){
@@ -16,33 +15,6 @@ describe("Load through HTTP (nested modules)", function(){
   var base = 'http://127.0.0.1:18080' + basePath;
   var output = ['sub_b', 'sub_a', 'sub_b_a', 'sub_b_b', 'test'];
 
-  // set-up and run web server
-  before(function(done){
-    // set-up server
-    var app = connect();
-    app.use(function(req, res, next){
-      // pass only baseUrl
-      if(req.url.indexOf(basePath) == 0) {
-        console.log(path.join(cwd, req.url));
-        fs.readFile(path.join(cwd, req.url.slice(1)), function(err, content){
-          if(err) throw new Error("Error: can't read file");
-          res.end(content);
-        });
-      }else{
-        return next();
-      }
-    });
-
-    // run server
-    this.server = http.createServer(app).listen(18080, "127.0.0.1", function() {
-      done();
-    });
-  });
-
-  after(function() {
-    this.server.close();
-  });
-
   before(function(done){
     var optimizer = optimize({
       baseUrl: base
@@ -51,10 +23,10 @@ describe("Load through HTTP (nested modules)", function(){
     });
 
     optimizer.on('dependency', function(dependency){
-      loadFileFromNet(dependency, base, cwd, optimizer.addFile.bind(optimizer));
+      loadFileFromFakeNet(dependency, base, cwd, optimizer.addFile.bind(optimizer));
     });
 
-    loadFileFromNet({path: base + '/test.js', name: 'test'}, base, cwd, function(err, file){
+    loadFileFromFakeNet({path: base + '/test.js', name: 'test'}, base, cwd, function(err, file){
       optimizer.addFile(err, file);
 
       optimizer.done(function(optimized){
