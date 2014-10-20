@@ -1,7 +1,7 @@
 var http = require('http');
 var File = require('vinyl');
 
-module.exports = function loadFile(dependency, base, cwd, done){
+module.exports = function loadFileFromNet(dependency, base, cwd, done){
   http.get(dependency.path, function(res) {
     var file = new File({
       path: dependency.path,
