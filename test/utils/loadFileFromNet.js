@@ -6,16 +6,16 @@ module.exports = function loadFile(dependency, base, cwd, done){
     var file = new File({
       path: dependency.path,
       cwd: cwd,
-      base: base,
-      name: dependency.name
+      base: base
     });
+    file.name = dependency.name
 
-    res.on("data", function(content) {
-      file.content = content;
+    res.on("data", function(contents) {
+      file.contents = contents;
     });
 
     res.on("end", function(err) {
-      done(err, file);
+      done(null, file);
     });
   });
 }
