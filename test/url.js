@@ -1,13 +1,13 @@
 var fs = require('fs');
 var optimize = require('../index.js');
 var assert = require('assert');
-var loadFile = require('./utils/loadFileFromNet');
+var loadFileFromNet = require('./utils/loadFileFromNet');
 var _ = require('lodash');
 var http = require('http');
 var path = require('path');
 var connect = require('connect');
 
-describe("Use URL as base", function(){
+describe("Load through HTTP", function(){
   
   var cwd = __dirname;
   var base = 'http://127.0.0.1:18080/basic/modules';
@@ -17,10 +17,8 @@ describe("Use URL as base", function(){
   before(function(done) {
     var app = connect();
     app.use(function(req, res) {
-      console.log(req.url);
-      fs.readFile(path.join(cwd, req.url.slice(1)), function(err, content){
+      return fs.readFile(path.join(cwd, req.url.slice(1)), function(err, content){
         if(err) throw new Error("Error: can't read file");
-        res.writeHead(200, {'Content-Type': 'application/javascript'});
         res.end(content);
       });
     });
@@ -41,10 +39,10 @@ describe("Use URL as base", function(){
     });
 
     optimizer.on('dependency', function(dependency){
-      loadFile(dependency, base, cwd, optimizer.addFile.bind(optimizer));
+      loadFileFromNet(dependency, base, cwd, optimizer.addFile.bind(optimizer));
     });
 
-    loadFile({path: base + '/test.js', name: 'test'}, base, cwd, function(err, file){
+    loadFileFromNet({path: base + '/test.js', name: 'test'}, base, cwd, function(err, file){
       optimizer.addFile(err, file);
       
       optimizer.done(function(optimized){
