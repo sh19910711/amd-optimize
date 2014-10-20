@@ -1,10 +1,11 @@
 var fs = require('fs');
 var optimize = require('../index.js');
 var assert = require('assert');
-var loadFile = require('./utils/loadFile');
+var loadFile = require('./utils/loadFileFromNet');
 var _ = require('lodash');
 var http = require('http');
 var connect = require('connect');
+var path = require('path');
 
 describe("Use URL as base", function(){
   
@@ -15,7 +16,10 @@ describe("Use URL as base", function(){
   // setup server
   before(function(done) {
     var app = function(req, res) {
-      res.end("hello");
+      fs.readFile(path.join(cwd, req.url.slice(1)), function(err, content){
+        if(err) throw new Error("Error: can't read file");
+        res.end(content);
+      });
     };
     this.server = http.createServer(app);
     this.server.listen(18080, "127.0.0.1", function() {
